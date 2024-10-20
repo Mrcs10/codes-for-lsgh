@@ -1,0 +1,115 @@
+const int chargePin = 9;
+const int dischargePin = 10;
+const int voltageSense = A0;
+const int currentSense = A1;
+
+int batteryVoltage = 0;
+int batteryCurrent = 0;
+int soc = 0;
+
+void setup() {
+  pinMode(chargePin, OUTPUT);
+  pinMode(dischargePin, OUTPUT);
+  pinMode(voltageSense, INPUT);
+  pinMode(currentSense, INPUT);
+  
+  Serial.begin(9600);
+}
+
+void loop() {
+  batteryVoltage = analogRead(voltageSense);
+  batteryCurrent = analogRead(currentSense);
+  
+  soc = calculateSOC(batteryVoltage); 
+  if (soc < 50) {
+    chargeBattery(soc);
+  } else if (soc > 90) {
+    dischargeBattery(soc);
+  } else {
+    maintainBattery();
+  }
+  
+  Serial.print("Battery SOC: ");
+  Serial.println(soc);
+  
+  delay(1000);
+}
+
+int calculateSOC(int voltage) {
+  return map(voltage, 300, 600, 0, 100); 
+}
+
+void chargeBattery(int soc) {
+  int pwmValue = map(soc, 0, 50, 255, 100); 
+  analogWrite(chargePin, pwmValue);
+  analogWrite(dischargePin, 0);
+  
+  Serial.println("Charging Battery");
+}
+
+void dischargeBattery(int soc) {
+  int pwmValue = map(soc, 90, 100, 255, 0); 
+  analogWrite(dischargePin, pwmValue);
+  analogWrite(chargePin, 0);
+  
+  Serial.println("Discharging Battery");
+}
+
+void maintainBattery() {
+  analogWrite(chargePin, 0);
+  analogWrite(dischargePin, 0);
+  
+  Serial.println("Battery in Idle Mode");
+}
+
+const int pwmPinCharge = 6;
+const int pwmPinDischarge = 5;
+const int voltageInput = A0;
+const int gridFluctuationInput = A1;
+
+int voltage = 0;
+int gridFluctuation = 0;
+
+void setup() {
+  pinMode(pwmPinCharge, OUTPUT);
+  pinMode(pwmPinDischarge, OUTPUT);
+  pinMode(voltageInput, INPUT);
+  pinMode(gridFluctuationInput, INPUT);
+  
+  Serial.begin(9600);
+}
+
+void loop() {
+  voltage = analogRead(voltageInput);
+  gridFluctuation = analogRead(gridFluctuationInput);
+  
+  if (voltage < 300) {
+    adaptiveCharging();
+  } else if (voltage > 550) {
+    adaptiveDischarging();
+  } else {
+    idle();
+  }
+
+  delay(500);
+}
+
+void adaptiveCharging() {
+  int pwmValue = map(voltage, 200, 300, 255, 100);
+  analogWrite(pwmPinCharge, pwmValue);
+  analogWrite(pwmPinDischarge, 0);
+  Serial.println("Charging Mode Active");
+}
+
+void adaptiveDischarging() {
+  int pwmValue = map(voltage, 500, 600, 255, 50);
+  analogWrite(pwmPinDischarge, pwmValue);
+  analogWrite(pwmPinCharge, 0);
+  Serial.println("Discharging Mode Active");
+}
+
+void idle() {
+  analogWrite(pwmPinCharge, 0);
+  analogWrite(pwmPinDischarge, 0);
+  Serial.println("System in Idle Mode");
+}
