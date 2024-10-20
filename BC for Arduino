@@ -1,0 +1,41 @@
+const float chargeThreshold = 11.5;
+const float dischargeThreshold = 12.5;
+int batteryPin = A0;
+int relayPin = 2;
+void setup() {
+    pinMode(relayPin, OUTPUT);
+    Serial.begin(9600);
+}
+void loop() {
+   float batteryVoltage = analogRead(batteryPin) * (5.0 / 1023.0) * 3;
+   if (batteryVoltage < chargeThreshold) {
+       digitalWrite(relayPin, HIGH);
+   } else if (batteryVoltage > dischargeThreshold) {
+      digitalWrite(relayPin, LOW);
+}
+Serial.println(batteryVoltage);
+delay(1000);
+}
+const int pwmPin = 9;
+const int relayPin = 2;
+
+void setup() {
+  pinMode(pwmPin, OUTPUT);
+  pinMode(relayPin, OUTPUT);
+  analogWrite(pwmPin, 0);
+}
+
+void loop() {
+   int batteryVoltage = analogRead(A0);
+   int loadDemand = analogRead(A1);
+
+if (batteryVoltage < 11.5) {
+   digitalWrite(relayPin, HIGH);
+   analogWrite(pwmPin, 255);
+} else if (loadDemand > 0) {
+   digitalWrite(relayPin, LOW);
+   analogWrite(pwmPin, 128);
+}
+
+delay(1000);
+}
