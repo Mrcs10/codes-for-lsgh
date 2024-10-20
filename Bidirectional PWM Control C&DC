@@ -1,0 +1,97 @@
+const int chargePin = 9;   
+const int dischargePin = 10; 
+const int voltageSensePin = A0; 
+const int currentSensePin = A1; 
+
+int chargeDutyCycle = 0;
+int dischargeDutyCycle = 0;
+int minVoltage = 300;  
+int maxVoltage = 600;  
+
+void setup() {
+  pinMode(chargePin, OUTPUT);
+  pinMode(dischargePin, OUTPUT);
+  pinMode(voltageSensePin, INPUT);
+  pinMode(currentSensePin, INPUT);
+  
+  Serial.begin(9600);
+}
+
+void loop() {
+  int batteryVoltage = analogRead(voltageSensePin);
+  int batteryCurrent = analogRead(currentSensePin); 
+  
+  if (batteryVoltage < minVoltage) {
+    chargeDutyCycle = 255; 
+    dischargeDutyCycle = 0; 
+  } else if (batteryVoltage > maxVoltage) {
+    chargeDutyCycle = 0; 
+    dischargeDutyCycle = 255; 
+  } else {
+    chargeDutyCycle = map(batteryVoltage, minVoltage, maxVoltage, 255, 0);  Scale down charging PWM as voltage increases
+    dischargeDutyCycle = map(batteryVoltage, maxVoltage, minVoltage, 0, 255);  Scale up discharge PWM as voltage decreases
+  }
+  
+  analogWrite(chargePin, chargeDutyCycle);  
+  analogWrite(dischargePin, dischargeDutyCycle); 
+ discharging
+  
+  // Print for debugging
+  Serial.print("Battery Voltage: ");
+  Serial.println(batteryVoltage);
+  Serial.print("Battery Current: ");
+  Serial.println(batteryCurrent);
+  Serial.print("Charge Duty Cycle: ");
+  Serial.println(chargeDutyCycle);
+  Serial.print("Discharge Duty Cycle: ");
+  Serial.println(dischargeDutyCycle);
+  
+  delay(1000); // 1-second delay
+}
+
+const int pwmChargePin = 3;
+const int pwmDischargePin = 5;
+const int voltagePin = A0;
+const int currentPin = A1;
+
+const int maxChargeVoltage = 620; 
+const int minDischargeVoltage = 280; 
+const int gridDemandPin = A2; 
+int gridDemand = 0; 
+
+void setup() {
+  pinMode(pwmChargePin, OUTPUT);
+  pinMode(pwmDischargePin, OUTPUT);
+  pinMode(voltagePin, INPUT);
+  pinMode(currentPin, INPUT);
+  pinMode(gridDemandPin, INPUT);
+  
+  Serial.begin(9600);
+}
+
+void loop() {
+  int batteryVoltage = analogRead(voltagePin);
+  int batteryCurrent = analogRead(currentPin);
+  gridDemand = analogRead(gridDemandPin);
+  
+  if (gridDemand > 500) {
+    if (batteryVoltage > minDischargeVoltage) {
+      int dischargePWM = map(batteryVoltage, maxChargeVoltage, minDischargeVoltage, 0, 255);
+      analogWrite(pwmDischargePin, dischargePWM);
+      analogWrite(pwmChargePin, 0);
+    }
+  } else {
+    if (batteryVoltage < maxChargeVoltage) {
+      int chargePWM = map(batteryVoltage, minDischargeVoltage, maxChargeVoltage, 255, 0);
+      analogWrite(pwmChargePin, chargePWM);
+      analogWrite(pwmDischargePin, 0);
+    }
+  }
+  
+  Serial.print("Battery Voltage: ");
+  Serial.println(batteryVoltage);
+  Serial.print("Grid Demand: ");
+  Serial.println(gridDemand);
+  
+  delay(500);
+}
