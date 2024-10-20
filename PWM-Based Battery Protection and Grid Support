@@ -1,0 +1,46 @@
+const int pwmChargePin = 3;
+const int pwmDischargePin = 5;
+const int voltagePin = A0;
+const int currentPin = A1;
+
+const int maxChargeVoltage = 620; 
+const int minDischargeVoltage = 280; 
+const int gridDemandPin = A2; 
+int gridDemand = 0; 
+
+void setup() {
+  pinMode(pwmChargePin, OUTPUT);
+  pinMode(pwmDischargePin, OUTPUT);
+  pinMode(voltagePin, INPUT);
+  pinMode(currentPin, INPUT);
+  pinMode(gridDemandPin, INPUT);
+  
+  Serial.begin(9600);
+}
+
+void loop() {
+  int batteryVoltage = analogRead(voltagePin);
+  int batteryCurrent = analogRead(currentPin);
+  gridDemand = analogRead(gridDemandPin);
+  
+  if (gridDemand > 500) {
+    if (batteryVoltage > minDischargeVoltage) {
+      int dischargePWM = map(batteryVoltage, maxChargeVoltage, minDischargeVoltage, 0, 255);
+      analogWrite(pwmDischargePin, dischargePWM);
+      analogWrite(pwmChargePin, 0);
+    }
+  } else {
+    if (batteryVoltage < maxChargeVoltage) {
+      int chargePWM = map(batteryVoltage, minDischargeVoltage, maxChargeVoltage, 255, 0);
+      analogWrite(pwmChargePin, chargePWM);
+      analogWrite(pwmDischargePin, 0);
+    }
+  }
+  
+  Serial.print("Battery Voltage: ");
+  Serial.println(batteryVoltage);
+  Serial.print("Grid Demand: ");
+  Serial.println(gridDemand);
+  
+  delay(500);
+}
